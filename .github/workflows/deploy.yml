@@ -1,0 +1,30 @@
+name: Deploy to Azure VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Copy code to Azure VM
+        run: |
+          ssh -o StrictHostKeyChecking=no azureuser@135.235.154.146 "
+            cd /home/azureuser/Random-Password-Generator &&
+            git pull &&
+            docker build -t my-react-app . &&
+            docker stop react-container || true &&
+            docker rm react-container || true &&
+            docker run -d -p 80:80 --name react-container my-react-app
+          "
