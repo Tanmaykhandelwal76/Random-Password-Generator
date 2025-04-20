@@ -18,7 +18,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Copy code to Azure VM
+      - name: Copy updated code to Azure VM & Deploy
         run: |
           ssh -o StrictHostKeyChecking=no azureuser@135.235.154.146 "
             cd /home/azureuser/Random-Password-Generator &&
@@ -28,3 +28,28 @@ jobs:
             docker rm react-container || true &&
             docker run -d -p 3000:80 --name react-container my-react-app
           "
+
+      - name: Collect metrics & generate graphs
+        run: |
+          ssh -o StrictHostKeyChecking=no azureuser@135.235.154.146 '
+            cd /home/azureuser/Random-Password-Generator &&
+            chmod +x collect_metrics.sh &&
+            ./collect_metrics.sh &&
+            sudo apt-get update &&
+            sudo apt-get install -y python3 python3-pip &&
+            pip3 install matplotlib pandas &&
+            python3 plot_metrics.py
+          '
+
+      - name: Download performance logs from VM
+        run: |
+          scp -o StrictHostKeyChecking=no azureuser@135.235.154.146:/home/azureuser/Random-Password-Generator/*.log .
+          scp -o StrictHostKeyChecking=no azureuser@135.235.154.146:/home/azureuser/Random-Password-Generator/*.png .
+
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-artifacts
+          path: |
+            *.log
+            *.png
