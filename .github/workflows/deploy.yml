@@ -47,7 +47,7 @@ jobs:
           scp -o StrictHostKeyChecking=no azureuser@135.235.154.146:/home/azureuser/Random-Password-Generator/*.png .
 
       - name: Upload performance artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-artifacts
           path: |
